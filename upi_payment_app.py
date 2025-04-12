@@ -1,59 +1,49 @@
 import streamlit as st
-import qrcode
-from PIL import Image
 import pandas as pd
-import os
-from datetime import datetime
+import datetime
+import uuid
+import urllib
 
-st.set_page_config(page_title="CashPocket 💼", page_icon="💰")
+# Initialize session state
+if "investments" not in st.session_state:
+    st.session_state.investments = []
 
-# Title and Logo
-st.image("cashpocket_logo.png", width=150)
-st.title("💼 CashPocket - UPI Payment Tracker")
+if "loans" not in st.session_state:
+    st.session_state.loans = []
 
-# UPI details
-upi_id = "ayushbhradwaj009-1@okicici"
-upi_name = "Ayush Bhardwaj"
+if "admin_mode" not in st.session_state:
+    st.session_state.admin_mode = False
 
-# Generate and show QR code
-qr_data = f"upi://pay?pa={upi_id}&pn={upi_name}"
-qr_img = qrcode.make(qr_data)
-qr_img_path = "upi_qr.png"
-qr_img.save(qr_img_path)
-st.image(qr_img_path, caption="Scan to Pay", width=250)
+st.title("💰 CashGrow: Invest & Borrow Platform")
 
-# Payment verification checkbox
-st.subheader("🔐 Step 1: Verify Payment")
-payment_verified = st.checkbox("✅ I have received the payment")
+st.sidebar.title("🔐 Admin Access")
+admin_pass = st.sidebar.text_input("Enter Admin Password", type="password")
+if admin_pass == "admin123":
+    st.sidebar.success("Admin Mode Enabled")
+    st.session_state.admin_mode = True
+else:
+    st.session_state.admin_mode = False
 
-# Proceed if payment is verified
-if payment_verified:
-    st.subheader("💳 Step 2: Enter Payment Details")
+st.header("📊 Choose Your Action")
+tab1, tab2 = st.tabs(["🚀 Invest Money", "📥 Apply for Loan"])
 
-    name = st.text_input("Enter payer's name")
-    amount = st.number_input("Enter amount (₹)", min_value=1.0, format="%.2f")
+# ---------------------- INVESTMENT SECTION ----------------------
+with tab1:
+    st.subheader("🚀 Invest Money & Earn 2% Monthly")
+    invest_amount = st.number_input("Enter amount to invest (₹)", min_value=500, step=100)
+    if invest_amount:
+        reward = invest_amount * 0.02
+        return_date = (datetime.datetime.now() + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
-    if st.button("✅ Add to Transaction History"):
-        # Record transaction
-        time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        new_data = pd.DataFrame([[name, amount, time_now]],
-                                columns=["Name", "Amount (₹)", "Timestamp"])
+        st.info(f"📈 You'll earn ₹{reward:.2f} after 30 days.")
+        st.write(f"📅 Return will be credited on: **{return_date}**")
 
-        # Append to file or create it
-        if os.path.exists("transactions.csv"):
-            df = pd.read_csv("transactions.csv")
-            df = pd.concat([df, new_data], ignore_index=True)
-        else:
-            df = new_data
+        st.markdown("---")
+        st.markdown("### 📲 Step 1: Make Payment to UPI")
 
-        df.to_csv("transactions.csv", index=False)
-        st.success("💾 Transaction saved successfully!")
-
-# Show transaction history
-if os.path.exists("transactions.csv"):
-    st.subheader("📜 Transaction History")
-    df = pd.read_csv("transactions.csv")
-    st.dataframe(df)
+        upi_url = f"upi://pay?pa=ayushbhradwaj009-1@okicici&pn=AyushBhardwaj&am={invest_amount}&cu=INR"
+        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={urllib.parse.quote(upi_url)}"
+        st.image(q
 
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("📥 Download History", data=csv,
